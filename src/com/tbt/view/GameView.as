@@ -187,6 +187,7 @@ package com.tbt.view
 		private function stateShot() : void
 		{
 			_court.clearMoveDistances();
+			_court.showAccuracyValues();
 		}
 		
 		private function actionShot(targetTile : CourtTile) : void
@@ -196,7 +197,6 @@ package com.tbt.view
 			if(!tileIsValid(targetTile, _court.validShotTiles)) return;
 			
 			var maxAccuracy : int = Gameplay.MAX_ACCURACY;
-			var maxPower : int = Gameplay.MAX_POWER;
 			
 			var accuracy : int = _sliderAccuracy.value;
 			var power : int = _sliderPower.value;
@@ -227,6 +227,7 @@ package com.tbt.view
 				_turnData.shot = new ShotData(actualTile.gridX, actualTile.gridY, accuracy+power);
 				ball.gridX = _turnData.shot.gridX;
 				ball.gridY = _turnData.shot.gridY;
+				_court.hideAccuracyValues();
 				changeActionPoints(-_turnData.shot.cost);
 				changeState(POST_MOVE);
 			}

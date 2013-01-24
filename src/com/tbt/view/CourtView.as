@@ -7,6 +7,7 @@ package com.tbt.view
 	import com.tbt.model.BallData;
 	import com.tbt.model.PlayerData;
 	import com.tbt.model.data.TurnData;
+	import com.tbt.utils.DataMaps;
 	import com.tbt.view.character.CharacterView;
 	import com.tbt.view.character.OpponentView;
 	import com.tbt.view.character.PlayerView;
@@ -49,6 +50,7 @@ package com.tbt.view
 					_tiles.push(tile);
 					if(tile.gridY >= Layout.COURT_HEIGHT >> 1){
 						if(playerAtTop){
+							tile.accuracyValue = DataMaps.getAccuracyValue(tile.gridX, tile.gridY);
 							_validShotTiles.push(tile);
 						}else{
 							_validMovementTiles.push(tile);
@@ -57,6 +59,7 @@ package com.tbt.view
 						if(playerAtTop){
 							_validMovementTiles.push(tile);
 						}else{
+							tile.accuracyValue = DataMaps.getAccuracyValue(tile.gridX, tile.gridY);
 							_validShotTiles.push(tile);
 						}
 					}
@@ -182,6 +185,20 @@ package com.tbt.view
 		public function get tiles() : Vector.<CourtTile>
 		{
 			return _tiles;
+		}
+		
+		public function showAccuracyValues():void
+		{
+			for each (var tile : CourtTile in _tiles) {
+				tile.accuracyHighlight.visible = true;
+			}
+		}
+		
+		public function hideAccuracyValues():void
+		{
+			for each (var tile : CourtTile in _tiles) {
+				tile.accuracyHighlight.visible = false;
+			}
 		}
 	}
 }

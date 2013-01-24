@@ -1,13 +1,14 @@
 package com.tbt.view.tiles
 {
-	import flash.events.MouseEvent;
-	import com.tbt.utils.TextFormats;
-	import com.tbt.utils.TextBitmap;
 	import com.tbt.constants.Colours;
 	import com.tbt.constants.Layout;
 	import com.tbt.constants.TileTypes;
+	import com.tbt.utils.TextBitmap;
+	import com.tbt.utils.TextFormats;
 
+	import flash.display.Graphics;
 	import flash.display.Sprite;
+	import flash.events.MouseEvent;
 
 	/**
 	 * @author Tom Danvers - tom@tomdanvers.com
@@ -18,11 +19,18 @@ package com.tbt.view.tiles
 		public var gridY : int;
 		private var _label : TextBitmap;
 		private var _value : int;
+		private var _accuracyValue : Number;
+		private var _accuracyHighlight : Sprite;
 
 		public function CourtTile(gridX : int, gridY : int)
 		{
 			this.gridY = gridY;
 			this.gridX = gridX;
+			
+			addChild(_accuracyHighlight = new Sprite());
+			drawTile(_accuracyHighlight.graphics, 0x00cbe1);
+			_accuracyHighlight.alpha = 0;
+			_accuracyHighlight.visible = false;
 			
 			addChild(_label = new TextBitmap(TextFormats.TILE_LABEL));
 			_label.alpha = .25;
@@ -45,26 +53,26 @@ package com.tbt.view.tiles
 		{
 			switch(type){
 				case TileTypes.OUT:
-					drawTile(Colours.TILE_OUT);
+					drawTile(this.graphics, Colours.TILE_OUT);
 					break;
 				case TileTypes.SERVICE_LEFT:
-					drawTile(Colours.TILE_SERVICE_LEFT);
+					drawTile(this.graphics, Colours.TILE_SERVICE_LEFT);
 					break;
 				case TileTypes.SERVICE_RIGHT:
-					drawTile(Colours.TILE_SERVICE_RIGHT);
+					drawTile(this.graphics, Colours.TILE_SERVICE_RIGHT);
 					break;
 				case TileTypes.COURT:
-					drawTile(Colours.TILE_COURT);
+					drawTile(this.graphics, Colours.TILE_COURT);
 					break;
 				case TileTypes.ALLEY:
-					drawTile(Colours.TILE_ALLEY);
+					drawTile(this.graphics, Colours.TILE_ALLEY);
 					break;
 				default:
-					drawTile(0xFF0000);
+					drawTile(this.graphics, 0xFF0000);
 			}
 		}
 
-		private function drawTile(colour : uint) : void
+		private function drawTile(graphics : Graphics, colour : uint) : void
 		{
 			graphics.lineStyle(1, 0xFFFFFF,.2, true);
 			graphics.beginFill(colour);
@@ -98,6 +106,23 @@ package com.tbt.view.tiles
 		{
 			_value = value;
 			label = String(value);
+		}
+
+		public function get accuracyValue() : Number
+		{
+			return _accuracyValue;
+		}
+
+		public function set accuracyValue(accuracyValue : Number) : void
+		{
+			_accuracyValue = accuracyValue;
+			trace("CourtTile.accuracyValue(",accuracyValue,")");
+			_accuracyHighlight.alpha = _accuracyValue;
+		}
+
+		public function get accuracyHighlight() : Sprite
+		{
+			return _accuracyHighlight;
 		}
 	}
 }
