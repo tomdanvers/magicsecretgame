@@ -196,25 +196,15 @@ package com.tbt.view
 			
 			if(!tileIsValid(targetTile, _court.validShotTiles)) return;
 			
-			var maxAccuracy : int = Gameplay.MAX_ACCURACY;
-			
-			var accuracy : int = _sliderAccuracy.value;
-			var power : int = _sliderPower.value;
-			
-			// The tile the ball lands in is now calculated
-			// Which ring of tiles around the target was hit?
-			var tileRingHit : int = -1;
-			for (var i : int = 0; i < maxAccuracy - accuracy; i++) {
-				if(tileRingHit == -1) if(Math.random() > .666) tileRingHit = i; // The fraction of the beast
-			} 
-			if(tileRingHit == -1) tileRingHit = maxAccuracy - accuracy;
-			// What tiles are in this ring?
-			var possibleTiles : Vector.<CourtTile> = _court.getTileRing(targetTile.gridX, targetTile.gridY, tileRingHit);
-			for (var t : int = 0; t < possibleTiles.length; t++) {
-				possibleTiles[t].alpha = .5;
+			var accuracyValue : Number = targetTile.accuracyValue;
+			trace("GameView.actionShot(",targetTile, accuracyValue,")");
+			var actualTile : CourtTile;
+			if(accuracyValue >= Math.random()){
+				actualTile = targetTile;
+			}else{
+				var possibleTiles : Vector.<CourtTile> = _court.getTileRing(targetTile.gridX, targetTile.gridY, 1);
+				actualTile = possibleTiles[Math.floor(possibleTiles.length * Math.random())];
 			}
-			// Which tile was hit?
-			var actualTile : CourtTile = possibleTiles[Math.floor(possibleTiles.length * Math.random())];
 					
 			var shotSuccessful : Boolean = true; // TODO Implement checks to see if shot was ok...
 			if(SERVING){
@@ -224,7 +214,7 @@ package com.tbt.view
 			}
 			
 			if(shotSuccessful){
-				_turnData.shot = new ShotData(actualTile.gridX, actualTile.gridY, accuracy+power);
+				_turnData.shot = new ShotData(actualTile.gridX, actualTile.gridY, 5);
 				ball.gridX = _turnData.shot.gridX;
 				ball.gridY = _turnData.shot.gridY;
 				_court.hideAccuracyValues();
