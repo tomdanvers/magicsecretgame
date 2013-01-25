@@ -1,5 +1,5 @@
-package com.tbt.model
-{
+package com.tbt.model {
+	import com.tbt.model.data.ShotData;
 	/**
 	 * @author Tom Danvers - tom@tomdanvers.com
 	 */
@@ -16,6 +16,12 @@ package com.tbt.model
 			this.gridY = gridY;
 			this.gridX = gridX;
 			this.ap = 50;
+		}
+
+		public static function getInitialPosition() : ShotData {
+//            var player1 : PlayerData = new PlayerData(PlayerIds.ONE, 7,25);
+//            var player2 : PlayerData = new PlayerData(PlayerIds.TWO, 8,4);
+			return new ShotData(7, 25, 7, 25, 0);
 		}
 	}
 }

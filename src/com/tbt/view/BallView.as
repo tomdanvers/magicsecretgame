@@ -9,9 +9,9 @@ package com.tbt.view
 	 */
 	public class BallView extends Sprite
 	{
-		public function BallView()
+		public function BallView(color : uint = 0xb1fe7e)
 		{
-			draw(0xb1fe7e);
+			draw(color);
 			
 			mouseEnabled = mouseChildren = false;
 		}

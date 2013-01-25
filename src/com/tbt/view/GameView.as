@@ -1,9 +1,6 @@
-package com.tbt.view
-{
+package com.tbt.view {
 	import com.tbt.constants.Gameplay;
-	import com.tbt.view.ui.ValueSlider;
 	import com.tbt.events.TileEvent;
-	import com.tbt.model.BallData;
 	import com.tbt.model.GameData;
 	import com.tbt.model.PlayerData;
 	import com.tbt.model.data.MoveData;
@@ -12,9 +9,11 @@ package com.tbt.view
 	import com.tbt.utils.TextBitmap;
 	import com.tbt.utils.TextFormats;
 	import com.tbt.view.tiles.CourtTile;
+	import com.tbt.view.ui.ValueSlider;
 
 	import flash.display.Sprite;
 	import flash.events.TimerEvent;
+	import flash.geom.Point;
 	import flash.utils.Timer;
 
 	/**
@@ -59,9 +58,10 @@ package com.tbt.view
 			mouseEnabled = false;
 			
 			addChild(_court = new CourtView(playerAtTop, playerId, opponentId));
+			
 			_court.positionPlayer(_data.player1);
 			_court.positionPlayer(_data.player2);
-			_court.positionBall(_data.ball);
+			_court.positionBall(PlayerData.getInitialPosition());
 			_court.addEventListener(TileEvent.CLICK, onTileClicked);
 			
 			addChild(_labelTitle = new TextBitmap(TextFormats.GAME_LABEL));
@@ -106,7 +106,7 @@ package com.tbt.view
 			
 			_court.updatePlayer(_data.getPlayerById(_playerId), SERVING);
 			_court.updateOpponent(_data.getPlayerById(_opponentId), SERVING);
-			_court.updateBall(_data.ball, SERVING);
+			_court.updateBall(PlayerData.getInitialPosition(), SERVING);
 			
 			if(SERVING){
 				changeState(SHOT);
@@ -190,11 +190,9 @@ package com.tbt.view
 			_court.showAccuracyValues();
 		}
 		
-		private function actionShot(targetTile : CourtTile) : void
+		private function actionShot(targetTile : CourtTile) : ShotData
 		{
-			var ball : BallData = _data.ball;
-			
-			if(!tileIsValid(targetTile, _court.validShotTiles)) return;
+			if(!tileIsValid(targetTile, _court.validShotTiles)) return null;
 			
 			var accuracyValue : Number = targetTile.accuracyValue;
 			trace("GameView.actionShot(",targetTile, accuracyValue,")");
@@ -214,13 +212,34 @@ package com.tbt.view
 			}
 			
 			if(shotSuccessful){
-				_turnData.shot = new ShotData(actualTile.gridX, actualTile.gridY, 5);
-				ball.gridX = _turnData.shot.gridX;
-				ball.gridY = _turnData.shot.gridY;
+				const POWER : uint = 2;		// TODO: Based on shot user selected
 				_court.hideAccuracyValues();
+				var finalBallPosition : Point = calculateFinalPosition(
+					new Point(actualTile.gridX, actualTile.gridY), 
+					new Point(_data.getPlayerById(_playerId).gridX, _data.getPlayerById(_playerId).gridY), 
+					POWER
+				);
+				
+				_turnData.shot = new ShotData(actualTile.gridX, actualTile.gridY, finalBallPosition.x, finalBallPosition.y, POWER);
+				_court.hideAccuracyValues();
+
 				changeActionPoints(-_turnData.shot.cost);
 				changeState(POST_MOVE);
 			}
+			
+			return _turnData.shot;
+		}
+		private function calculateFinalPosition(bounceTile : Point, playerPosition:Point, power : int) : Point {
+		 	var dx:Number = bounceTile.x - playerPosition.x;
+    		var dy:Number = bounceTile.y - playerPosition.y;
+    		var angle : Number = Math.atan2(dy,dx);
+			
+			const BASE_POWER_MODIFIER : uint = 2;
+			var position : Point = Point.polar(BASE_POWER_MODIFIER * power, angle);
+			position = bounceTile.add(position);
+			position.x = Math.round(position.x);
+			position.y = Math.round(position.y);
+			return position;
 		}
 
 		private function statePostMove() : void
@@ -257,15 +276,16 @@ package com.tbt.view
 		private function onTileClicked(event : TileEvent) : void
 		{
 			var player : PlayerData = _data.getPlayerById(_playerId);
-			var ball : BallData = _data.ball;
+//			var ball : BallData = _data.ball;
 			
 			var tile : CourtTile = event.tile;
+			var shot : ShotData = null;
 			switch(_state){
 				case PRE_MOVE:
 					actionPreMove(tile);
 					break;
 				case SHOT:
-					actionShot(tile);
+					shot = actionShot(tile);
 					break;
 				case POST_MOVE:
 					actionPostMove(tile);
@@ -273,8 +293,12 @@ package com.tbt.view
 				default:
 					trace("GameView.onTileClicked(",tile,")");
 			}
+			if (!shot)
+				shot = _data.getLastShot();
+				
 			_court.updatePlayer(player, false);
-			_court.updateBall(ball, false);
+			if (shot)
+				_court.updateBall(shot, false);
 		}
 
 		private function tileIsValid(tile : CourtTile, tileSet : Vector.<CourtTile>) : Boolean

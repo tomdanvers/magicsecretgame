@@ -1,5 +1,6 @@
 package com.tbt.model
 {
+	import com.tbt.model.data.ShotData;
 	import com.tbt.model.data.TurnData;
 	/**
 	 * @author Tom Danvers - tom@tomdanvers.com
@@ -8,14 +9,14 @@ package com.tbt.model
 	{
 		public var turns : Vector.<TurnData>;
 		
-		public var ball : BallData;
+//		public var ball : BallData;
 		public var player1 : PlayerData;
 		public var player2 : PlayerData;
 		public var playerCurrent : PlayerData;
 		
 		private var _playerMap : Object;
 		
-		public function init(player1 : PlayerData, player2 : PlayerData, ball : BallData) : void
+		public function init(player1 : PlayerData, player2 : PlayerData) : void
 		{
 			_playerMap = {};
 			
@@ -27,7 +28,7 @@ package com.tbt.model
 			
 			this.playerCurrent = player1;
 			
-			this.ball = ball;
+//			this.ball = ball;
 			
 			this.turns = new Vector.<TurnData>();
 		}
@@ -45,6 +46,16 @@ package com.tbt.model
 		public function getLastTurn() : TurnData
 		{
 			return turns.length > 0 ? turns[turns.length-1] : null;
+		}
+		
+		public function getLastShot() : ShotData
+		{
+			var shot : ShotData = null;
+			var lastTurn : TurnData = getLastTurn();
+			if (lastTurn) {
+				shot = lastTurn.shot;
+			}
+			return shot;
 		}
 	}
 }

@@ -1,11 +1,10 @@
-package com.tbt.view
-{
+package com.tbt.view {
 	import com.greensock.TweenMax;
 	import com.tbt.constants.Layout;
 	import com.tbt.constants.TileTypes;
 	import com.tbt.events.TileEvent;
-	import com.tbt.model.BallData;
 	import com.tbt.model.PlayerData;
+	import com.tbt.model.data.ShotData;
 	import com.tbt.model.data.TurnData;
 	import com.tbt.utils.DataMaps;
 	import com.tbt.view.character.CharacterView;
@@ -15,6 +14,7 @@ package com.tbt.view
 
 	import flash.display.Sprite;
 	import flash.events.MouseEvent;
+	import flash.media.Sound;
 
 
 	/**
@@ -22,6 +22,14 @@ package com.tbt.view
 	 */
 	public class CourtView extends Sprite
 	{
+		[Embed(source='/../assets/bounce.mp3')]
+		private const Bounce : Class;
+		private var _bounceSound : Sound;
+		
+		[Embed(source='/../assets/hit.mp3')]
+		private const Hit : Class;
+		private var _hitSound : Sound;
+		
 		private var _tiles : Vector.<CourtTile>;
 		private var _validShotTiles : Vector.<CourtTile>;
 		private var _validMovementTiles : Vector.<CourtTile>;
@@ -30,6 +38,7 @@ package com.tbt.view
 		private var _player : PlayerView;
 		private var _opponent : OpponentView;
 		private var _lines : CourtLines;
+		private var _bounce : BallView;
 		private var _ball : BallView;
 		
 		public function CourtView(playerAtTop : Boolean, playerId : String, opponentId : String)
@@ -37,7 +46,9 @@ package com.tbt.view
 			_tiles = new Vector.<CourtTile>();
 			_validMovementTiles = new Vector.<CourtTile>();
 			_validShotTiles = new Vector.<CourtTile>();
-			
+			_bounceSound = new Bounce();
+			_hitSound = new Hit();
+					
 			var tile : CourtTile;
 			for (var y : int = 0; y < Layout.COURT_HEIGHT; y++) {
 				for (var x : int = 0; x < Layout.COURT_WIDTH; x++) {
@@ -68,7 +79,9 @@ package com.tbt.view
 			addChild(_lines = new CourtLines());
 			addChild(_player = new PlayerView(playerId));
 			addChild(_opponent = new OpponentView(opponentId));
+			addChild(_bounce = new BallView(0x8E9660));
 			addChild(_ball = new BallView());
+			
 			
 			_charactersMap = {};
 			_charactersMap[playerId] = _player;
@@ -96,9 +109,10 @@ package com.tbt.view
 			gridPositionToPosition(_opponent, opponentData.gridX, opponentData.gridY, instant ? 0:.75);
 		}
 		
-		public function updateBall(ballData : BallData, instant : Boolean) : void
+		public function updateBall(shot : ShotData, instant : Boolean) : void
 		{
-			gridPositionToPosition(_ball, ballData.gridX, ballData.gridY, instant ? 0:.5);
+			gridPositionToPosition(_ball, shot.gridX, shot.gridY, instant ? 0:.5);
+			gridPositionToPosition(_bounce, shot.bounceX, shot.bounceY, instant ? 0:.5);
 		}
 
 		private function gridPositionToPosition(item : Sprite, gridX : int, gridY : int, duration : Number = 1) : void
@@ -166,10 +180,12 @@ package com.tbt.view
 			player.y = data.gridY * Layout.TILE_HEIGHT;
 		}
 		
-		public function positionBall(data : BallData) : void
+		public function positionBall(data : ShotData) : void
 		{
 			_ball.x = data.gridX * Layout.TILE_WIDTH;
 			_ball.y = data.gridY * Layout.TILE_HEIGHT;
+			_bounce.x = data.bounceX * Layout.TILE_WIDTH;
+			_bounce.y = data.bounceY * Layout.TILE_HEIGHT;
 		}
 		
 		public function showTurn(turn : TurnData, callback : Function) : void
@@ -177,9 +193,21 @@ package com.tbt.view
 			var player : CharacterView = _charactersMap[turn.playerId];
 			TweenMax.killTweensOf(player);
 			TweenMax.killTweensOf(_ball);
-			if(turn.preMove)TweenMax.to(player, 1, {x:turn.preMove.gridX * Layout.TILE_WIDTH, y:turn.preMove.gridY * Layout.TILE_HEIGHT, delay : .5});
-			TweenMax.to(_ball, .75, {x:turn.shot.gridX * Layout.TILE_WIDTH, y:turn.shot.gridY * Layout.TILE_HEIGHT, delay : 1.75});
-			TweenMax.to(player, 1, {x:turn.postMove.gridX * Layout.TILE_WIDTH, y:turn.postMove.gridY * Layout.TILE_HEIGHT, delay:2, onComplete:callback});
+			TweenMax.killTweensOf(_bounce);
+			
+			if(turn.preMove) TweenMax.to(player, 1, {x:turn.preMove.gridX * Layout.TILE_WIDTH, y:turn.preMove.gridY * Layout.TILE_HEIGHT, delay : .5, onComplete: playHitSound});
+			
+			TweenMax.to(_bounce, .75, {x:turn.shot.bounceX * Layout.TILE_WIDTH, y:turn.shot.bounceY * Layout.TILE_HEIGHT, delay : 1.75});
+			TweenMax.to(_ball, .75, {x:turn.shot.gridX * Layout.TILE_WIDTH, y:turn.shot.gridY * Layout.TILE_HEIGHT, alpha: 1, delay : 1.75 + 0.75, onStart: playBounceSound});
+			TweenMax.to(player, 1, {x:turn.postMove.gridX * Layout.TILE_WIDTH, y:turn.postMove.gridY * Layout.TILE_HEIGHT, delay:2 + 0.75, onComplete:callback});
+		}
+		
+		private function playBounceSound() : void {
+			_bounceSound.play(166);
+		}
+		
+		private function playHitSound() : void {
+			_hitSound.play(166);
 		}
 
 		public function get tiles() : Vector.<CourtTile>
