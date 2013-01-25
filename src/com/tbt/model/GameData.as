@@ -1,7 +1,7 @@
 package com.tbt.model
 {
-	import com.tbt.constants.CourtSides;
 	import com.tbt.events.GameDataEvent;
+	import com.tbt.model.data.ShotData;
 	import com.tbt.model.data.TurnData;
 
 	import flash.events.EventDispatcher;
@@ -12,7 +12,6 @@ package com.tbt.model
 	{
 		public var turns : Vector.<TurnData>;
 		
-//		public var ball : BallData;
 		public var player1 : PlayerData;
 		public var player2 : PlayerData;
 		public var playerCurrent : PlayerData;
@@ -32,11 +31,7 @@ package com.tbt.model
 			
 			this.playerServing = this.playerCurrent = player1;
 			
-//			this.ball = ball;
-
 			this.turns = new Vector.<TurnData>();
-
-			reset();
 		}
 
 		public function reset() : void
@@ -46,9 +41,6 @@ package com.tbt.model
 			
 			player2.gridX = 8;
 			player2.gridY = 4;
-			
-			ball.gridX = playerServing.gridX;
-			ball.gridY = playerServing.gridY + (playerServing.courtSide == CourtSides.BOTTOM ? 1 : -1);
 			
 			dispatchEvent(new GameDataEvent(GameDataEvent.RESET));
 		}

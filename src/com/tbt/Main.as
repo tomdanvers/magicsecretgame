@@ -1,9 +1,6 @@
 package com.tbt
 {
 	import com.tbt.constants.CourtSides;
-	import flash.display.StageAlign;
-	import flash.display.StageScaleMode;
-	import com.tbt.model.BallData;
 	import com.tbt.constants.Layout;
 	import com.tbt.constants.PlayerIds;
 	import com.tbt.model.GameData;
@@ -34,8 +31,6 @@ package com.tbt
 			player1.courtSide = CourtSides.TOP;
 			player2.courtSide = CourtSides.BOTTOM;
 			
-			var ball : BallData = new BallData();
-			
 			var game : GameData = new GameData();
 			game.init(player1, player2);
 			
@@ -45,6 +40,8 @@ package com.tbt
 			var viewPlayer2 : GameView = new GameView(game, player2);
 			viewPlayer2.x = Layout.VIEW_WIDTH;
 			addChild(viewPlayer2);
+			
+			game.reset();
 		}
 	}
 }

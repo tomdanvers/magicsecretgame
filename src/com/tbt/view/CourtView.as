@@ -1,11 +1,8 @@
-package com.tbt.view {
-	import com.tbt.constants.CourtSides;
-	import com.greensock.easing.Linear;
-	import flash.geom.ColorTransform;
-	import flash.geom.Matrix;
-	import flash.filters.BlurFilter;
-	import flash.geom.Point;
+package com.tbt.view
+{
 	import com.greensock.TweenMax;
+	import com.greensock.easing.Linear;
+	import com.tbt.constants.CourtSides;
 	import com.tbt.constants.Layout;
 	import com.tbt.constants.TileTypes;
 	import com.tbt.events.TileEvent;
@@ -23,6 +20,10 @@ package com.tbt.view {
 	import flash.display.Sprite;
 	import flash.events.Event;
 	import flash.events.MouseEvent;
+	import flash.filters.BlurFilter;
+	import flash.geom.ColorTransform;
+	import flash.geom.Matrix;
+	import flash.geom.Point;
 	import flash.media.Sound;
 
 
@@ -105,18 +106,19 @@ package com.tbt.view {
 			addChild(_lines = new CourtLines());
 			addChild(_player = new PlayerView(playerData));
 			addChild(_opponent = new OpponentView(playerData.opponent));
+			
+			addChild(_bounce = new BallView(0x8E9660));
+			
 			_effectsBMD = new BitmapData(Layout.VIEW_WIDTH, Layout.VIEW_HEIGHT, true, 0x00000000);
 			addChild(_effectsBM = new Bitmap(_effectsBMD));
-			addChild(_bounce = new BallView(0x8E9660));
-			addChild(_ball = new BallView());
+			
+			addChild(_ball = new BallView(0x70fc88));
+			
 			_charactersMap = {};
 			_charactersMap[playerData.id] = _player;
 			_charactersMap[playerData.opponent.id] = _opponent;
 			
 			addEventListener(Event.ENTER_FRAME, onUpdate);
-			_charactersMap = {};
-			_charactersMap[playerId] = _player;
-			_charactersMap[opponentId] = _opponent;
 		}
 
 		private function onTileClick(event : MouseEvent) : void
@@ -142,6 +144,7 @@ package com.tbt.view {
 		
 		public function updateBall(shot : ShotData, instant : Boolean) : void
 		{
+			trace("CourtView.updateBall(",shot, instant,")");
 			gridPositionToPosition(_ball, shot.gridX, shot.gridY, instant ? 0:.5);
 			gridPositionToPosition(_bounce, shot.bounceX, shot.bounceY, instant ? 0:.5);
 		}
@@ -231,17 +234,14 @@ package com.tbt.view {
 			var player : CharacterView = _charactersMap[turn.playerData.id];
 			TweenMax.killTweensOf(player);
 			TweenMax.killTweensOf(_ball);
-			if(turn.preMove) TweenMax.to(player, 1, {x:turn.preMove.gridX * Layout.TILE_WIDTH, y:turn.preMove.gridY * Layout.TILE_HEIGHT, delay : .5});
-			if(turn.shot) TweenMax.to(_ball, .75, {x:turn.shot.gridX * Layout.TILE_WIDTH, y:turn.shot.gridY * Layout.TILE_HEIGHT, delay : 1.75});
-			if(turn.postMove) TweenMax.to(player, 1, {x:turn.postMove.gridX * Layout.TILE_WIDTH, y:turn.postMove.gridY * Layout.TILE_HEIGHT, delay:2});
-			TweenMax.delayedCall(3, callback);
 			TweenMax.killTweensOf(_bounce);
 			
-			if(turn.preMove) TweenMax.to(player, 1, {x:turn.preMove.gridX * Layout.TILE_WIDTH, y:turn.preMove.gridY * Layout.TILE_HEIGHT, delay : .5, onComplete: playHitSound});
 			
-			TweenMax.to(_bounce, .75, {x:turn.shot.bounceX * Layout.TILE_WIDTH, y:turn.shot.bounceY * Layout.TILE_HEIGHT, delay : 1.75});
-			TweenMax.to(_ball, .75, {x:turn.shot.gridX * Layout.TILE_WIDTH, y:turn.shot.gridY * Layout.TILE_HEIGHT, alpha: 1, delay : 1.75 + 0.75, onStart: playBounceSound});
-			TweenMax.to(player, 1, {x:turn.postMove.gridX * Layout.TILE_WIDTH, y:turn.postMove.gridY * Layout.TILE_HEIGHT, delay:2 + 0.75, onComplete:callback});
+			if(turn.preMove) TweenMax.to(player, 1, {x:turn.preMove.gridX * Layout.TILE_WIDTH, y:turn.preMove.gridY * Layout.TILE_HEIGHT, delay : .5});
+			if(turn.shot) TweenMax.to(_bounce, .75, {x:turn.shot.bounceX * Layout.TILE_WIDTH, y:turn.shot.bounceY * Layout.TILE_HEIGHT, delay : 1.75, onStart: playHitSound});
+			if(turn.shot) TweenMax.to(_ball, .75, {x:turn.shot.gridX * Layout.TILE_WIDTH, y:turn.shot.gridY * Layout.TILE_HEIGHT, alpha: 1, delay : 1.75, onComplete: playBounceSound});
+			if(turn.postMove) TweenMax.to(player, 1, {x:turn.postMove.gridX * Layout.TILE_WIDTH, y:turn.postMove.gridY * Layout.TILE_HEIGHT, delay:2 + 0.75});
+			TweenMax.delayedCall(3, callback);
 		}
 		
 		private function playBounceSound() : void {

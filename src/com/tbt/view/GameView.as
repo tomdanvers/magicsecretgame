@@ -1,4 +1,5 @@
-package com.tbt.view {
+package com.tbt.view
+{
 	import com.tbt.constants.Gameplay;
 	import com.tbt.events.GameDataEvent;
 	import com.tbt.events.TileEvent;
@@ -11,7 +12,6 @@ package com.tbt.view {
 	import com.tbt.utils.TextFormats;
 	import com.tbt.view.tiles.CourtTile;
 	import com.tbt.view.ui.ValueSlider;
-
 	import flash.display.Sprite;
 	import flash.events.TimerEvent;
 	import flash.geom.Point;
@@ -58,8 +58,6 @@ package com.tbt.view {
 			addChild(_court = new CourtView(_playerData));
 			_court.positionPlayer(_gameData.player1);
 			_court.positionPlayer(_gameData.player2);
-			_court.positionPlayer(_data.player2);
-			_court.positionBall(PlayerData.getInitialPosition());
 			_court.addEventListener(TileEvent.CLICK, onTileClicked);
 			
 			addChild(_labelTitle = new TextBitmap(TextFormats.GAME_LABEL));
@@ -87,7 +85,11 @@ package com.tbt.view {
 		{
 			_court.updatePlayer(_playerData, true);
 			_court.updateOpponent(_playerData.opponent, true);
-			_court.updateBall(_gameData.ball, true);
+			if(_turnData && _turnData.shot){
+				_court.updateBall(_turnData.shot, true);
+			}else{
+				_court.positionBall(new ShotData(_gameData.playerServing.gridX, _gameData.playerServing.gridY, _gameData.playerServing.gridX, _gameData.playerServing.gridY, 0));
+			}
 		}
 		
 		private function onPoll(event : TimerEvent) : void
@@ -200,8 +202,6 @@ package com.tbt.view {
 		
 		private function actionShot(targetTile : CourtTile) : ShotData
 		{
-			var ball : BallData = _gameData.ball;
-			
 			var accuracyValue : Number = targetTile.accuracyValue;
 			trace("GameView.actionShot(",targetTile, accuracyValue,")");
 			var actualTile : CourtTile;
@@ -221,27 +221,23 @@ package com.tbt.view {
 				shotSuccessful = tileIsValid(actualTile, _court.validServiceLeftTiles);
 			}
 			
-			_turnData.shot = new ShotData(actualTile.gridX, actualTile.gridY, 5);
-			ball.gridX = _turnData.shot.gridX;
-			ball.gridY = _turnData.shot.gridY;
+			
+			const POWER : uint = 2;		// TODO: Based on shot user selected
 			_court.hideAccuracyValues();
+			var finalBallPosition : Point = calculateFinalPosition(
+				new Point(actualTile.gridX, actualTile.gridY), 
+				new Point(_playerData.gridX, _playerData.gridY), 
+				POWER
+			);
+			
+			_turnData.shot = new ShotData(actualTile.gridX, actualTile.gridY, finalBallPosition.x, finalBallPosition.y, POWER);
 			changeActionPoints(-_turnData.shot.cost);
 			
 			_turnData.playerLostPoint = !shotSuccessful;
-			
-			if(shotSuccessful){
-				const POWER : uint = 2;		// TODO: Based on shot user selected
-				_court.hideAccuracyValues();
-				var finalBallPosition : Point = calculateFinalPosition(
-					new Point(actualTile.gridX, actualTile.gridY), 
-					new Point(_data.getPlayerById(_playerId).gridX, _data.getPlayerById(_playerId).gridY), 
-					POWER
-				);
-				
-				_turnData.shot = new ShotData(actualTile.gridX, actualTile.gridY, finalBallPosition.x, finalBallPosition.y, POWER);
-				_court.hideAccuracyValues();
 
-				changeActionPoints(-_turnData.shot.cost);
+			_court.hideAccuracyValues();
+
+			if(shotSuccessful){
 				changeState(POST_MOVE);
 			}else{
 				endTurn();
@@ -301,7 +297,6 @@ package com.tbt.view {
 		private function onTileClicked(event : TileEvent) : void
 		{
 			var player : PlayerData = _playerData;
-			var ball : BallData = _gameData.ball;
 			
 			var tile : CourtTile = event.tile;
 			var shot : ShotData = null;
@@ -319,7 +314,7 @@ package com.tbt.view {
 					trace("GameView.onTileClicked(",tile,")");
 			}
 			if (!shot)
-				shot = _data.getLastShot();
+				shot = _gameData.getLastShot();
 				
 			_court.updatePlayer(player, false);
 			if (shot)

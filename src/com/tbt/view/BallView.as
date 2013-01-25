@@ -11,7 +11,7 @@ package com.tbt.view
 	{
 		private var _xPrevious : Number = 0;
 		private var _yPrevious : Number = 0;
-		public function BallView()
+		public function BallView(color : uint)
 		{
 			draw(color);
 			
