@@ -9,6 +9,8 @@ package com.tbt.model
 		public var gridX : int;
 		public var gridY : int;
 		public var ap : int;
+		public var opponent : PlayerData;
+		public var courtSide : String;
 		
 		public function PlayerData(id : String, gridX : int = 0, gridY : int = 0) 
 		{

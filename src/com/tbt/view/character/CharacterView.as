@@ -1,5 +1,6 @@
 package com.tbt.view.character
 {
+	import com.tbt.model.PlayerData;
 	import com.tbt.constants.Layout;
 	import flash.display.Sprite;
 
@@ -8,11 +9,11 @@ package com.tbt.view.character
 	 */
 	public class CharacterView extends Sprite
 	{
-		public var id : String;
+		public var data : PlayerData;
 		
-		public function CharacterView(id : String) 
+		public function CharacterView(data : PlayerData) 
 		{
-			this.id = id;
+			this.data = data;
 		}
 		
 		protected function draw(colour : uint) : void

@@ -8,7 +8,7 @@ package com.tbt.model
 		public var gridX : int;
 		public var gridY : int;
 		
-		public function BallData(gridX : int, gridY : int) 
+		public function BallData() 
 		{
 			this.gridX = gridX;
 			this.gridY = gridY;

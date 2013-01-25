@@ -1,7 +1,7 @@
 package com.tbt.view
 {
 	import com.tbt.constants.Gameplay;
-	import com.tbt.view.ui.ValueSlider;
+	import com.tbt.events.GameDataEvent;
 	import com.tbt.events.TileEvent;
 	import com.tbt.model.BallData;
 	import com.tbt.model.GameData;
@@ -12,6 +12,7 @@ package com.tbt.view
 	import com.tbt.utils.TextBitmap;
 	import com.tbt.utils.TextFormats;
 	import com.tbt.view.tiles.CourtTile;
+	import com.tbt.view.ui.ValueSlider;
 
 	import flash.display.Sprite;
 	import flash.events.TimerEvent;
@@ -22,18 +23,15 @@ package com.tbt.view
 	 */
 	public class GameView extends Sprite
 	{
-		private static var SERVING : Boolean = true;
-		
 		private static const WAITING : String = "Waiting";
 		private static const WATCHING_MOVE : String = "Watching Opponent's Move";
 		private static const PRE_MOVE : String = "Pre Shot Move";
 		private static const SHOT : String = "Shot";
 		private static const POST_MOVE : String = "Post Shot Move";
 		
-		private var _data : GameData;
+		private var _gameData : GameData;
 		private var _turnData : TurnData;
-		private var _playerId : String;
-		private var _opponentId : String;
+		private var _playerData : PlayerData;
 
 		private var _poller : Timer;
 		private var _waiting : WaitingView;
@@ -46,11 +44,11 @@ package com.tbt.view
 		private var _sliderPower : ValueSlider;
 		private var _sliderGrunt : ValueSlider;
 		
-		public function GameView(data : GameData, playerId : String, opponentId : String, playerAtTop : Boolean)
+		public function GameView(data : GameData, player : PlayerData)
 		{
-			_data = data;
-			_playerId = playerId;
-			_opponentId = opponentId;
+			_gameData = data;
+			_gameData.addEventListener(GameDataEvent.RESET, onGameDataReset);
+			_playerData = player;
 			
 			_poller = new Timer(1000);
 			_poller.addEventListener(TimerEvent.TIMER, onPoll);
@@ -58,10 +56,10 @@ package com.tbt.view
 			
 			mouseEnabled = false;
 			
-			addChild(_court = new CourtView(playerAtTop, playerId, opponentId));
-			_court.positionPlayer(_data.player1);
-			_court.positionPlayer(_data.player2);
-			_court.positionBall(_data.ball);
+			addChild(_court = new CourtView(_playerData));
+			_court.positionPlayer(_gameData.player1);
+			_court.positionPlayer(_gameData.player2);
+			_court.positionBall(_gameData.ball);
 			_court.addEventListener(TileEvent.CLICK, onTileClicked);
 			
 			addChild(_labelTitle = new TextBitmap(TextFormats.GAME_LABEL));
@@ -84,10 +82,17 @@ package com.tbt.view
 			
 			changeState(WAITING);
 		}
+
+		private function onGameDataReset(event : GameDataEvent) : void
+		{
+			_court.updatePlayer(_playerData, true);
+			_court.updateOpponent(_playerData.opponent, true);
+			_court.updateBall(_gameData.ball, true);
+		}
 		
 		private function onPoll(event : TimerEvent) : void
 		{
-			if(_data.playerCurrent.id == _playerId){
+			if(_gameData.playerCurrent == _playerData){
 				if(_turnData == null) turnStart();
 			}else{
 				if(_turnData != null) turnEnd();
@@ -96,28 +101,24 @@ package com.tbt.view
 
 		private function turnStart() : void
 		{
-			trace("GameView.turnStart(",_playerId,")");
+			trace("GameView.turnStart(",_playerData.id,")");
 			
-			_turnData = new TurnData(_playerId);
+			_turnData = new TurnData(_playerData);
 			mouseEnabled = true;
 			_waiting.visible = false;
 			
 			changeActionPoints(10);
 			
-			_court.updatePlayer(_data.getPlayerById(_playerId), SERVING);
-			_court.updateOpponent(_data.getPlayerById(_opponentId), SERVING);
-			_court.updateBall(_data.ball, SERVING);
-			
-			if(SERVING){
-				changeState(SHOT);
-			}else{
+			if(_gameData.getLastTurn()){
 				changeState(WATCHING_MOVE);
+			}else{
+				changeState(SHOT);
 			}
 		}
 
 		private function turnEnd() : void
 		{
-			trace("GameView.turnEnd(",_playerId,")");
+			trace("GameView.turnEnd(",_playerData.id,")");
 			_turnData = null;
 			mouseEnabled = false;
 			_waiting.visible = true;
@@ -128,7 +129,7 @@ package com.tbt.view
 		private function changeState(state : String) : void
 		{
 			_state = state;
-			_labelTitle.text = "Player "+_playerId + " : " + _state;
+			_labelTitle.text = "Player "+_playerData.id + " : " + _state;
 			
 			switch(_state){
 				case WATCHING_MOVE:
@@ -152,7 +153,7 @@ package com.tbt.view
 		
 		private function stateWatchingMove() : void
 		{
-			var turn : TurnData = _data.getLastTurn();
+			var turn : TurnData = _gameData.getLastTurn();
 			if(turn){
 				_court.showTurn(turn, turnShown);
 			}else{
@@ -162,24 +163,31 @@ package com.tbt.view
 
 		private function turnShown() : void
 		{
-			changeState(PRE_MOVE);
+			var turn : TurnData = _gameData.getLastTurn();
+			trace("GameView.turnShown(SHOWN PLAYER LOST POINT:",turn.playerLostPoint,")");
+			if(turn.playerLostPoint){
+				_gameData.playerServing = turn.playerData.opponent;
+				_gameData.reset();
+				
+				changeState(SHOT);
+			}else{
+				changeState(PRE_MOVE);
+			}
 		}
 		
 		private function statePreMove() : void
 		{
-			_court.showMoveDistances(_data.getPlayerById(_playerId).gridX, _data.getPlayerById(_playerId).gridY);
+			_court.showMoveDistances(_playerData.gridX, _playerData.gridY);
 		}
 		
 		private function actionPreMove(tile : CourtTile) : void
 		{
-			var player : PlayerData = _data.getPlayerById(_playerId);
-			
 			if(!tileIsValid(tile, _court.validMovementTiles)) return;
-			if(tile.value > player.ap) return;
+			if(tile.value > _playerData.ap) return;
 			
 			_turnData.preMove = new MoveData(tile.gridX, tile.gridY, tile.value);
-			player.gridX = _turnData.preMove.gridX;
-			player.gridY = _turnData.preMove.gridY;
+			_playerData.gridX = _turnData.preMove.gridX;
+			_playerData.gridY = _turnData.preMove.gridY;
 			changeActionPoints(- _turnData.preMove.cost);
 			changeState(SHOT);
 		}
@@ -192,7 +200,7 @@ package com.tbt.view
 		
 		private function actionShot(targetTile : CourtTile) : void
 		{
-			var ball : BallData = _data.ball;
+			var ball : BallData = _gameData.ball;
 			
 			if(!tileIsValid(targetTile, _court.validShotTiles)) return;
 			
@@ -206,31 +214,38 @@ package com.tbt.view
 				actualTile = possibleTiles[Math.floor(possibleTiles.length * Math.random())];
 			}
 					
-			var shotSuccessful : Boolean = true; // TODO Implement checks to see if shot was ok...
-			if(SERVING){
-				// Shot must be in service area
-			}else{
+			var shotSuccessful : Boolean = true;
+			if(_gameData.playerServing == null){
 				// Shot must be in court
+				shotSuccessful = tileIsValid(actualTile, _court.validCourtTiles);
+			}else{
+				// Shot must be in service area
+				shotSuccessful = tileIsValid(actualTile, _court.validServiceLeftTiles);
 			}
 			
+			_turnData.shot = new ShotData(actualTile.gridX, actualTile.gridY, 5);
+			ball.gridX = _turnData.shot.gridX;
+			ball.gridY = _turnData.shot.gridY;
+			_court.hideAccuracyValues();
+			changeActionPoints(-_turnData.shot.cost);
+			
+			_turnData.playerLostPoint = !shotSuccessful;
+			
 			if(shotSuccessful){
-				_turnData.shot = new ShotData(actualTile.gridX, actualTile.gridY, 5);
-				ball.gridX = _turnData.shot.gridX;
-				ball.gridY = _turnData.shot.gridY;
-				_court.hideAccuracyValues();
-				changeActionPoints(-_turnData.shot.cost);
 				changeState(POST_MOVE);
+			}else{
+				endTurn();
 			}
 		}
 
 		private function statePostMove() : void
 		{
-			_court.showMoveDistances(_data.getPlayerById(_playerId).gridX, _data.getPlayerById(_playerId).gridY);
+			_court.showMoveDistances(_playerData.gridX, _playerData.gridY);
 		}
 		
 		private function actionPostMove(tile : CourtTile) : void
 		{
-			var player : PlayerData = _data.getPlayerById(_playerId);
+			var player : PlayerData = _playerData;
 			
 			if(!tileIsValid(tile, _court.validMovementTiles)) return;
 			if(tile.value > player.ap) return;
@@ -239,14 +254,19 @@ package com.tbt.view
 			player.gridX = _turnData.postMove.gridX;
 			player.gridY = _turnData.postMove.gridY;
 			changeActionPoints(- _turnData.postMove.cost);
-			changeState(WAITING);
-			if(SERVING) SERVING = false;
-			_data.addTurn(_turnData);
-			_data.playerCurrent = _data.getPlayerById(_opponentId);
+			if(_gameData.playerServing) _gameData.playerServing = null;
 			
 			for each (var t : CourtTile in _court.tiles) {
 				t.alpha = 1;	
 			}
+			
+			endTurn();
+		}
+
+		private function endTurn() : void
+		{
+			_gameData.endTurn(_turnData);
+			changeState(WAITING);
 		}
 		
 		private function stateWaiting() : void
@@ -256,8 +276,8 @@ package com.tbt.view
 
 		private function onTileClicked(event : TileEvent) : void
 		{
-			var player : PlayerData = _data.getPlayerById(_playerId);
-			var ball : BallData = _data.ball;
+			var player : PlayerData = _playerData;
+			var ball : BallData = _gameData.ball;
 			
 			var tile : CourtTile = event.tile;
 			switch(_state){
@@ -287,13 +307,13 @@ package com.tbt.view
 
 		private function changeActionPoints(diff : int) : void
 		{
-			_data.getPlayerById(_playerId).ap += diff;
+			_playerData.ap += diff;
 			updateActionPointsLabel();
 		}
 
 		private function updateActionPointsLabel() : void
 		{
-			_labelAP.text = 'AP:'+_data.getPlayerById(_playerId).ap;
+			_labelAP.text = 'AP:'+_playerData.ap;
 		}
 	}
 }

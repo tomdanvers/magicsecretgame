@@ -1,15 +1,16 @@
 package com.tbt.view.character
 {
 	import com.tbt.constants.Colours;
+	import com.tbt.model.PlayerData;
 
 	/**
 	 * @author Tom Danvers - tom@tomdanvers.com
 	 */
 	public class PlayerView extends CharacterView
 	{
-		public function PlayerView(id : String)
+		public function PlayerView(data : PlayerData)
 		{
-			super(id);
+			super(data);
 			
 			draw(Colours.PLAYER);
 		}

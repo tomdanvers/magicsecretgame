@@ -21,6 +21,7 @@ package com.tbt.view.tiles
 		private var _value : int;
 		private var _accuracyValue : Number;
 		private var _accuracyHighlight : Sprite;
+		private var _type : String;
 
 		public function CourtTile(gridX : int, gridY : int)
 		{
@@ -51,6 +52,7 @@ package com.tbt.view.tiles
 
 		public function set type(type : String) : void
 		{
+			_type = type;
 			switch(type){
 				case TileTypes.OUT:
 					drawTile(this.graphics, Colours.TILE_OUT);
@@ -116,13 +118,17 @@ package com.tbt.view.tiles
 		public function set accuracyValue(accuracyValue : Number) : void
 		{
 			_accuracyValue = accuracyValue;
-			trace("CourtTile.accuracyValue(",accuracyValue,")");
 			_accuracyHighlight.alpha = _accuracyValue;
 		}
 
 		public function get accuracyHighlight() : Sprite
 		{
 			return _accuracyHighlight;
+		}
+
+		public function get type() : String
+		{
+			return _type;
 		}
 	}
 }
