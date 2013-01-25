@@ -13,7 +13,7 @@ package com.tbt.view
 		private var _yPrevious : Number = 0;
 		public function BallView()
 		{
-			draw(0xb1fe7e);
+			draw(color);
 			
 			mouseEnabled = mouseChildren = false;
 		}

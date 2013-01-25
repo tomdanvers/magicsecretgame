@@ -6,10 +6,13 @@ package com.tbt
 	import com.tbt.model.BallData;
 	import com.tbt.constants.Layout;
 	import com.tbt.constants.PlayerIds;
-	import com.tbt.view.GameView;
 	import com.tbt.model.GameData;
 	import com.tbt.model.PlayerData;
+	import com.tbt.view.GameView;
+
 	import flash.display.Sprite;
+	import flash.display.StageAlign;
+	import flash.display.StageScaleMode;
 
 	/**
 	 * @author Tom Danvers - tom@tomdanvers.com
@@ -34,7 +37,7 @@ package com.tbt
 			var ball : BallData = new BallData();
 			
 			var game : GameData = new GameData();
-			game.init(player1, player2, ball);
+			game.init(player1, player2);
 			
 			var viewPlayer1 : GameView = new GameView(game, player1);
 			addChild(viewPlayer1);

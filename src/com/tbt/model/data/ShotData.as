@@ -5,14 +5,19 @@ package com.tbt.model.data
 	 */
 	public class ShotData
 	{
+		public var bounceX : int;
+		public var bounceY : int;
 		public var gridX : int;
 		public var gridY : int;
+		
 		public var cost : int;
 
-		public function ShotData(gridX : int, gridY : int, cost : int) 
+		public function ShotData(bounceX : int, bounceY : int, gridX : int, gridY : int, cost : int) 
 		{
-			this.gridX = gridX;
 			this.gridY = gridY;
+			this.gridX = gridX;
+			this.bounceX = bounceX;
+			this.bounceY = bounceY;
 			this.cost = cost;
 		}
 	}
