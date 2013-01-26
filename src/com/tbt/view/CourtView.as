@@ -78,7 +78,9 @@ package com.tbt.view
 					tile.addEventListener(MouseEvent.CLICK, onTileClick);
 					addChild(tile);
 					_tiles.push(tile);
+					trace("CourtView.CourtView(",tile,")");
 					if(tile.gridY >= Layout.COURT_HEIGHT >> 1){
+						trace("CourtView.CourtView(BOTTOM:"+playerData.courtSide+")");
 						if(playerData.courtSide == CourtSides.BOTTOM){
 							tile.accuracyValue = DataMaps.getAccuracyValue(tile.gridX, tile.gridY);
 							_validShotTiles.push(tile);
@@ -90,6 +92,7 @@ package com.tbt.view
 							_validMovementTiles.push(tile);
 						}
 					}else{
+						trace("CourtView.CourtView(TOP:"+playerData.courtSide+")");
 						if(playerData.courtSide == CourtSides.TOP){
 							tile.accuracyValue = DataMaps.getAccuracyValue(tile.gridX, tile.gridY);
 							_validShotTiles.push(tile);
@@ -248,7 +251,7 @@ package com.tbt.view
 			_bounceSound.play(166);
 		}
 		
-		private function playHitSound() : void {
+		public function playHitSound() : void {
 			_hitSound.play(166);
 		}
 

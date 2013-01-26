@@ -211,6 +211,8 @@ package com.tbt.view
 				var possibleTiles : Vector.<CourtTile> = _court.getTileRing(targetTile.gridX, targetTile.gridY, 1);
 				actualTile = possibleTiles[Math.floor(possibleTiles.length * Math.random())];
 			}
+			
+			_court.playHitSound();
 					
 			var shotSuccessful : Boolean = true;
 			if(_gameData.playerServing == null){
@@ -218,7 +220,7 @@ package com.tbt.view
 				shotSuccessful = tileIsValid(actualTile, _court.validCourtTiles);
 			}else{
 				// Shot must be in service area
-				shotSuccessful = tileIsValid(actualTile, _court.validServiceLeftTiles);
+				shotSuccessful = tileIsValid(actualTile, _court.validServiceLeftTiles) || tileIsValid(actualTile, _court.validServiceRightTiles);
 			}
 			
 			
